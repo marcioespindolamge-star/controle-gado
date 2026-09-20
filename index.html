@@ -26,7 +26,26 @@ const $=id=>document.getElementById(id), v=id=>$(id).value.trim();
 function esc(x=''){return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function show(id,b){document.querySelectorAll('#appBox main section, #appBox section.card').forEach(x=>x.classList.add('hidden'));$(id).classList.remove('hidden');document.querySelectorAll('.menu button').forEach(x=>x.classList.remove('active'));b.classList.add('active');render()}
 window.show=show;
-$('btnEntrar').onclick=async()=>{ $('loginErro').textContent=''; try{await signInWithEmailAndPassword(auth,v('loginEmail'),v('loginSenha'))}catch(e){$('loginErro').textContent='E-mail ou senha incorretos.'} };
+$('btnEntrar').onclick=async()=>{
+  $('loginErro').textContent='';
+  const email=v('loginEmail');
+  const senha=v('loginSenha');
+  if(!email||!senha){$('loginErro').textContent='Informe o e-mail e a senha.';return;}
+  try{
+    await signInWithEmailAndPassword(auth,email,senha);
+  }catch(e){
+    console.error('Firebase Auth:', e);
+    const mapa={
+      'auth/invalid-credential':'E-mail ou senha não conferem com o usuário cadastrado.',
+      'auth/invalid-email':'O endereço de e-mail é inválido.',
+      'auth/user-disabled':'Este usuário está desativado no Firebase.',
+      'auth/too-many-requests':'Muitas tentativas. Aguarde alguns minutos e tente novamente.',
+      'auth/network-request-failed':'Falha de conexão com o Firebase. Verifique a internet.',
+      'auth/unauthorized-domain':'Este endereço do GitHub Pages ainda não está autorizado no Firebase.'
+    };
+    $('loginErro').textContent=(mapa[e.code]||'Erro no login')+' ['+(e.code||'sem-código')+']';
+  }
+};
 $('loginSenha').addEventListener('keydown',e=>{if(e.key==='Enter')$('btnEntrar').click()});
 $('btnSair').onclick=()=>signOut(auth);
 function stopListeners(){unsubs.forEach(f=>f());unsubs=[]}
